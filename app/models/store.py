@@ -16,6 +16,7 @@ class Store(BaseModel):
     models: List[Store3DModel] = Field(default_factory=list)
     max_users: int = Field(default=2)
     active_users: int = Field(default=0)
+    installed_widget_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
 

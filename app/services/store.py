@@ -166,4 +166,34 @@ class StoreService:
             return False, "Model not found"
 
 
+    async def install_widget(self, store_id: str, widget_id: str) -> Optional[Dict[str, Any]]:
+        """Install a widget on a store (replaces previous if exists)"""
+        try:
+            # Convert store_id to ObjectId if it's a string representing an ObjectId
+            store_oid = ObjectId(store_id) if isinstance(store_id, str) and len(store_id) == 24 else store_id
+            
+            # Update store with new installed_widget_id
+            result = await self.db.stores.update_one(
+                {"_id": store_oid},
+                {
+                    "$set": {
+                        "installed_widget_id": widget_id,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                # Return the updated store
+                store = await self.db.stores.find_one({"_id": store_oid})
+                if store:
+                    store["id"] = str(store["_id"])
+                return store
+            else:
+                return None
+        except Exception as e:
+            print(f"Error installing widget: {e}")
+            return None
+
+
 store_service = StoreService()

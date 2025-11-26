@@ -40,7 +40,8 @@ class Store:
     image_url: str
     models: List[Model]
     active_user_count: int = 0
-    session_id: Optional[str] = None 
+    session_id: Optional[str] = None
+    installed_widget_id: Optional[str] = None 
 
 
 @strawberry.type
@@ -66,7 +67,8 @@ class Query:
                     )
                     for m in s.get("models", [])
                 ],
-                active_user_count=s.get("active_user_count", 0)
+                active_user_count=s.get("active_user_count", 0),
+                installed_widget_id=s.get("installed_widget_id")
             )
             for s in stores
         ]
@@ -93,7 +95,8 @@ class Query:
                 )
                 for m in s.get("models", [])
             ],
-            active_user_count=s.get("active_user_count", 0)
+            active_user_count=s.get("active_user_count", 0),
+            installed_widget_id=s.get("installed_widget_id")
         )
 
 @strawberry.type
@@ -159,6 +162,36 @@ class Mutation:
                 for m in s.get("models", [])
             ],
             active_user_count=s.get("active_user_count", 0)
+        )
+
+    @strawberry.mutation
+    async def install_widget(self, store_id: str, widget_id: str, info) -> Store:
+        """Install a widget on the store"""
+        db = mongo_module.db
+        store_service.set_db(db)
+        
+        # Use service method to install widget
+        s = await store_service.install_widget(store_id, widget_id)
+        if not s:
+            raise Exception(f"Failed to install widget on store {store_id}")
+        
+        return Store(
+            id=s["id"],
+            name=s["name"],
+            description=s.get("description", ""),
+            image_url=normalize_image_url(s.get("image_url", "")),
+            models=[
+                Model(
+                    name=m.get("name", ""),
+                    glb_url=normalize_model_url(m.get("glb_url", "")),
+                    position=m.get("position", [0, 0]),
+                    size=m.get("size", [1, 1, 1]),
+                    entrance_order=m.get("entrance_order", 0)
+                )
+                for m in s.get("models", [])
+            ],
+            active_user_count=s.get("active_user_count", 0),
+            installed_widget_id=s.get("installed_widget_id")
         )
 
     @strawberry.mutation
