@@ -1,15 +1,22 @@
 (function() {
   'use strict';
 
+  console.log('[Widget] Script loaded');
+
   const BACKEND_URL = 'http://localhost:8000';
   const WIDGET_ID = 'store-widget-banner';
 
-  // Get domain from current page
-  const domain = window.location.hostname;
+  // Get domain from script data attribute or fallback to current hostname
+  const currentScript = document.currentScript;
+  const domain = currentScript?.getAttribute('data-domain') || window.location.hostname;
+  
+  console.log('[Widget] Initializing with domain:', domain);
 
   // Fetch widget config by domain
   async function fetchWidgetConfig() {
     try {
+      console.log('[Widget] Fetching config for domain:', domain);
+      
       const query = `
         query {
           getWidgetByDomain(domain: "${domain}") {
@@ -32,13 +39,15 @@
       const data = await response.json();
       
       if (data.errors) {
-        console.error('GraphQL error:', data.errors);
+        console.error('[Widget] GraphQL error:', data.errors);
         return null;
       }
 
-      return data.data?.getWidgetByDomain;
+      const config = data.data?.getWidgetByDomain;
+      console.log('[Widget] Config fetched:', config);
+      return config;
     } catch (error) {
-      console.error('Error fetching widget config:', error);
+      console.error('[Widget] Error fetching config:', error);
       return null;
     }
   }
@@ -46,6 +55,8 @@
   // Track analytics event
   async function trackEvent(storeId, domain, eventType) {
     try {
+      console.log('[Widget] Tracking event:', { storeId, domain, eventType });
+      
       const mutation = `
         mutation {
           trackEvent(
@@ -58,13 +69,18 @@
         }
       `;
 
-      await fetch(`${BACKEND_URL}/graphql`, {
+      const response = await fetch(`${BACKEND_URL}/graphql`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mutation }),
       });
+
+      const data = await response.json();
+      if (data.errors) {
+        console.error('[Widget] Track error:', data.errors);
+      }
     } catch (error) {
-      console.error('Error tracking event:', error);
+      console.error('[Widget] Error tracking event:', error);
     }
   }
 
@@ -265,21 +281,29 @@
   // Initialize widget
   async function init() {
     try {
+      console.log('[Widget] Initializing...');
       injectStyles();
 
       const config = await fetchWidgetConfig();
 
-      if (!config || !config.isActive) {
-        console.log('Widget not configured for this domain');
+      if (!config) {
+        console.warn('[Widget] No config returned');
         return;
       }
+
+      if (!config.isActive) {
+        console.warn('[Widget] Widget is not active');
+        return;
+      }
+
+      console.log('[Widget] Config is valid, rendering banner');
 
       // Track page view with store_id
       trackEvent(config.storeId, config.domain, 'page_view');
 
       renderBanner(config);
     } catch (error) {
-      console.error('Widget initialization error:', error);
+      console.error('[Widget] Initialization error:', error);
     }
   }
 

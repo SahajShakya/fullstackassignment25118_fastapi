@@ -41,6 +41,28 @@ class AnalyticsSummaryType:
 @strawberry.type
 class WidgetQuery:
     @strawberry.field
+    async def get_widget_by_id(self, widget_id: str) -> Optional[WidgetConfigType]:
+        """Get widget configuration by ID (PUBLIC - no auth required)"""
+        db = mongo_module.db
+        widget_service.set_db(db)
+        
+        widget = await widget_service.get_widget_by_id(widget_id)
+        
+        if not widget:
+            return None
+        
+        return WidgetConfigType(
+            id=str(widget["_id"]),
+            store_id=str(widget["store_id"]),
+            domain=widget["domain"],
+            video_url=widget["video_url"],
+            banner_text=widget.get("banner_text", ""),
+            is_active=widget["is_active"],
+            created_at=widget["created_at"],
+            updated_at=widget["updated_at"],
+        )
+    
+    @strawberry.field
     async def get_widget_by_domain(self, domain: str) -> Optional[WidgetConfigType]:
         """Get widget configuration by domain (PUBLIC - no auth required)"""
         db = mongo_module.db

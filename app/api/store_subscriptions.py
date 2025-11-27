@@ -61,7 +61,9 @@ class Subscription:
                         )
                         for m in s.get("models", [])
                     ],
-                    active_user_count=s.get("active_user_count", 0)
+                    active_user_count=s.get("active_user_count", 0),
+                    installed_widget_id=s.get("installed_widget_id"),
+                    installed_widget_domain=s.get("installed_widget_domain")
                 )
             
             while True:
@@ -83,7 +85,9 @@ class Subscription:
                             )
                             for m in s.get("models", [])
                         ],
-                        active_user_count=s.get("active_user_count", 0)
+                        active_user_count=s.get("active_user_count", 0),
+                        installed_widget_id=s.get("installed_widget_id"),
+                        installed_widget_domain=s.get("installed_widget_domain")
                     )
         finally:
             if store_id in _store_subscriptions:

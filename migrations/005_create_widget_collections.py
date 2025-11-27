@@ -9,10 +9,18 @@ def upgrade(db):
     except Exception as e:
         print(f"✓ widget_configs collection already exists: {e}")
     
-    # Create indices for widget_configs
-    db.widget_configs.create_index("domain", unique=True)
-    db.widget_configs.create_index("store_id")
+    # Drop old unique index on domain if it exists
+    try:
+        db.widget_configs.drop_index("domain_1")
+        print("✓ Dropped old domain unique index")
+    except Exception as e:
+        print(f"✓ Old domain index doesn't exist or error: {e}")
+    
+    # Create new indices for widget_configs
+    # Compound unique index on (store_id, domain)
+    db.widget_configs.create_index([("store_id", 1), ("domain", 1)], unique=True)
     db.widget_configs.create_index("is_active")
+    db.widget_configs.create_index("store_id")
     print("✓ Created indices for widget_configs")
     
     # Create widget_analytics collection

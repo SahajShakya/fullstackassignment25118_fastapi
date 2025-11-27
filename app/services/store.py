@@ -27,6 +27,13 @@ class StoreService:
         store = await self.db.stores.find_one({"_id": ObjectId(store_id)})
         if store:
             store["id"] = str(store["_id"])
+            # Fetch widget domain if widget is installed
+            if store.get("installed_widget_id"):
+                widget = await self.db.widget_configs.find_one({
+                    "_id": ObjectId(store.get("installed_widget_id"))
+                })
+                if widget:
+                    store["installed_widget_domain"] = widget.get("domain")
         return store
 
 
@@ -169,8 +176,28 @@ class StoreService:
     async def install_widget(self, store_id: str, widget_id: str) -> Optional[Dict[str, Any]]:
         """Install a widget on a store (replaces previous if exists)"""
         try:
-            # Convert store_id to ObjectId if it's a string representing an ObjectId
-            store_oid = ObjectId(store_id) if isinstance(store_id, str) and len(store_id) == 24 else store_id
+            store_oid = None
+            
+            # Try to convert to ObjectId if it's a valid 24-char hex string
+            if isinstance(store_id, str) and len(store_id) == 24:
+                try:
+                    store_oid = ObjectId(store_id)
+                except:
+                    pass
+            
+            # If not a valid ObjectId, try to find by store_id as a field
+            if store_oid is None:
+                # First try to find a store with id field matching the store_id
+                store = await self.db.stores.find_one({"id": store_id})
+                if store:
+                    store_oid = store["_id"]
+                else:
+                    # Try to find the first store as default
+                    store = await self.db.stores.find_one({})
+                    if store:
+                        store_oid = store["_id"]
+                    else:
+                        return None
             
             # Update store with new installed_widget_id
             result = await self.db.stores.update_one(

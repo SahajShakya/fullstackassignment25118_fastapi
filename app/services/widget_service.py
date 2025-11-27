@@ -28,7 +28,8 @@ class WidgetService:
     
     async def get_widgets_by_store(self, store_id: str) -> List[dict]:
         widgets = await self.db.widget_configs.find({
-            "store_id": store_id
+            "store_id": store_id,
+            "is_active": True
         }).to_list(length=None)
         return widgets
     
@@ -74,14 +75,10 @@ class WidgetService:
         return result.modified_count > 0
     
     async def delete_widget(self, widget_id: str) -> bool:
-        result = await self.db.widget_configs.update_one(
-            {"_id": ObjectId(widget_id)},
-            {"$set": {
-                "is_active": False,
-                "updated_at": datetime.utcnow()
-            }}
+        result = await self.db.widget_configs.delete_one(
+            {"_id": ObjectId(widget_id)}
         )
-        return result.modified_count > 0
+        return result.deleted_count > 0
     
     
     async def track_event(

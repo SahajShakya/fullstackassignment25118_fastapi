@@ -41,7 +41,8 @@ class Store:
     models: List[Model]
     active_user_count: int = 0
     session_id: Optional[str] = None
-    installed_widget_id: Optional[str] = None 
+    installed_widget_id: Optional[str] = None
+    installed_widget_domain: Optional[str] = None 
 
 
 @strawberry.type
@@ -68,7 +69,8 @@ class Query:
                     for m in s.get("models", [])
                 ],
                 active_user_count=s.get("active_user_count", 0),
-                installed_widget_id=s.get("installed_widget_id")
+                installed_widget_id=s.get("installed_widget_id"),
+                installed_widget_domain=s.get("installed_widget_domain")
             )
             for s in stores
         ]
@@ -96,7 +98,8 @@ class Query:
                 for m in s.get("models", [])
             ],
             active_user_count=s.get("active_user_count", 0),
-            installed_widget_id=s.get("installed_widget_id")
+            installed_widget_id=s.get("installed_widget_id"),
+            installed_widget_domain=s.get("installed_widget_domain")
         )
 
 @strawberry.type
@@ -132,7 +135,9 @@ class Mutation:
                 for m in s.get("models", [])
             ],
             active_user_count=s.get("active_user_count", 0),
-            session_id=session_id 
+            session_id=session_id,
+            installed_widget_id=s.get("installed_widget_id"),
+            installed_widget_domain=s.get("installed_widget_domain")
         )
 
     @strawberry.mutation
@@ -161,7 +166,9 @@ class Mutation:
                 )
                 for m in s.get("models", [])
             ],
-            active_user_count=s.get("active_user_count", 0)
+            active_user_count=s.get("active_user_count", 0),
+            installed_widget_id=s.get("installed_widget_id"),
+            installed_widget_domain=s.get("installed_widget_domain")
         )
 
     @strawberry.mutation
@@ -191,7 +198,8 @@ class Mutation:
                 for m in s.get("models", [])
             ],
             active_user_count=s.get("active_user_count", 0),
-            installed_widget_id=s.get("installed_widget_id")
+            installed_widget_id=s.get("installed_widget_id"),
+            installed_widget_domain=s.get("installed_widget_domain")
         )
 
     @strawberry.mutation
@@ -226,5 +234,7 @@ class Mutation:
                 )
                 for m in s.get("models", [])
             ],
-            active_user_count=s.get("active_user_count", 0)
+            active_user_count=s.get("active_user_count", 0),
+            installed_widget_id=s.get("installed_widget_id"),
+            installed_widget_domain=s.get("installed_widget_domain")
         )
