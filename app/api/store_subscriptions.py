@@ -1,11 +1,12 @@
-"""GraphQL Subscriptions for Store updates"""
 import strawberry
 import asyncio
 from typing import AsyncGenerator
 import db.mongo as mongo_module
 from services.store import store_service
 from api.store_schema import Store, Model
+from core.config import settings
 
+BackEND_URL = settings.BACKEND_URL
 
 def normalize_image_url(image_url: str) -> str:
     if not image_url:
@@ -13,7 +14,7 @@ def normalize_image_url(image_url: str) -> str:
     if image_url.startswith("http"):
         return image_url
     clean_path = image_url.lstrip("./").lstrip("../")
-    return f"http://localhost:8000/{clean_path}"
+    return f"{BackEND_URL}/{clean_path}"
 
 
 def normalize_model_url(model_url: str) -> str:
@@ -22,7 +23,7 @@ def normalize_model_url(model_url: str) -> str:
     if model_url.startswith("http"):
         return model_url
     clean_path = model_url.lstrip("./").lstrip("../").lstrip("/")
-    return f"http://localhost:8000/{clean_path}"
+    return f"{BackEND_URL}/{clean_path}"
 
 
 _store_subscriptions = {}
@@ -35,7 +36,6 @@ class Subscription:
         db = mongo_module.db
         store_service.set_db(db)
         
-        # Track this subscription
         if store_id not in _store_subscriptions:
             _store_subscriptions[store_id] = []
         
@@ -43,7 +43,6 @@ class Subscription:
         _store_subscriptions[store_id].append(sub_id)
         
         try:
-            # Send initial state
             s = await store_service.get_store_by_id(store_id)
             if s:
                 yield Store(
@@ -61,7 +60,9 @@ class Subscription:
                         )
                         for m in s.get("models", [])
                     ],
-                    active_user_count=s.get("active_user_count", 0)
+                    active_user_count=s.get("active_user_count", 0),
+                    installed_widget_id=s.get("installed_widget_id"),
+                    installed_widget_domain=s.get("installed_widget_domain")
                 )
             
             while True:
@@ -83,7 +84,9 @@ class Subscription:
                             )
                             for m in s.get("models", [])
                         ],
-                        active_user_count=s.get("active_user_count", 0)
+                        active_user_count=s.get("active_user_count", 0),
+                        installed_widget_id=s.get("installed_widget_id"),
+                        installed_widget_domain=s.get("installed_widget_domain")
                     )
         finally:
             if store_id in _store_subscriptions:

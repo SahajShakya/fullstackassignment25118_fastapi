@@ -15,26 +15,28 @@ class StoreService:
         stores = await self.db.stores.find({}).to_list(length=None)
         for store in stores:
             store["id"] = str(store["_id"])
-            # Clean up stale sessions (older than 5 minutes)
             await self._cleanup_stale_sessions(store["_id"])
         return stores
 
 
     async def get_store_by_id(self, store_id: str) -> Optional[Dict[str, Any]]:
-        # Clean up stale sessions first
         await self._cleanup_stale_sessions(ObjectId(store_id))
         
         store = await self.db.stores.find_one({"_id": ObjectId(store_id)})
         if store:
             store["id"] = str(store["_id"])
+            # Fetch widget domain if widget is installed
+            if store.get("installed_widget_id"):
+                widget = await self.db.widget_configs.find_one({
+                    "_id": ObjectId(store.get("installed_widget_id"))
+                })
+                if widget:
+                    store["installed_widget_domain"] = widget.get("domain")
         return store
 
 
     async def _cleanup_stale_sessions(self, store_id: ObjectId):
-        """Remove sessions older than 5 minutes and recalculate active_user_count"""
         five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
-        
-        # Remove stale sessions from active_sessions array
         result = await self.db.stores.update_one(
             {"_id": store_id},
             {
@@ -101,13 +103,11 @@ class StoreService:
                 {"_id": ObjectId(store_id)},
                 {"$set": {"active_user_count": unique_users}}
             )
-            print(f"DEBUG: User {user_id} entered store {store_id}, unique users now: {unique_users}")
         
         return True, session_id
 
 
     async def exit_store(self, store_id: str, session_id: str) -> bool:
-        """User exits a store - removes session"""
         result = await self.db.stores.update_one(
             {"_id": ObjectId(store_id)},
             {
@@ -130,7 +130,6 @@ class StoreService:
 
 
     async def heartbeat(self, store_id: str, session_id: str) -> bool:
-        """Update last_heartbeat to keep session alive"""
         result = await self.db.stores.update_one(
             {"_id": ObjectId(store_id), "active_sessions.session_id": session_id},
             {
@@ -164,6 +163,49 @@ class StoreService:
             return True, "Position updated"
         else:
             return False, "Model not found"
+
+
+    async def install_widget(self, store_id: str, widget_id: str) -> Optional[Dict[str, Any]]:
+        try:
+            store_oid = None
+            
+            if isinstance(store_id, str) and len(store_id) == 24:
+                try:
+                    store_oid = ObjectId(store_id)
+                except:
+                    pass
+            
+            if store_oid is None:
+                store = await self.db.stores.find_one({"id": store_id})
+                if store:
+                    store_oid = store["_id"]
+                else:
+                    store = await self.db.stores.find_one({})
+                    if store:
+                        store_oid = store["_id"]
+                    else:
+                        return None
+            
+            result = await self.db.stores.update_one(
+                {"_id": store_oid},
+                {
+                    "$set": {
+                        "installed_widget_id": widget_id,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                store = await self.db.stores.find_one({"_id": store_oid})
+                if store:
+                    store["id"] = str(store["_id"])
+                return store
+            else:
+                return None
+        except Exception as e:
+            print(f"Error installing widget: {e}")
+            return None
 
 
 store_service = StoreService()

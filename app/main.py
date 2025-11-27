@@ -52,3 +52,17 @@ async def root():
         "graphql": "http://localhost:8000/graphql",
         "version": "1.0"
     }
+
+
+@app.get("/widget/index.js")
+async def get_widget():
+    """Serve widget JS file for embedding on external domains"""
+    widget_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "widget", "index.js")
+    
+    if not os.path.exists(widget_path):
+        return {"error": "Widget file not found"}
+    
+    with open(widget_path, 'r') as f:
+        content = f.read()
+    
+    return content

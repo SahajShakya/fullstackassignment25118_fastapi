@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
 """
-CLI tool to run MongoDB migrations and manage database
-
-Usage:
   python manage.py migrate        - Run all pending migrations
   python manage.py migrate:status - Show migration status
   python manage.py status         - Check database status
@@ -13,7 +9,8 @@ import logging
 from pathlib import Path
 import os
 import datetime
-import importlib.util
+# import importlib.util
+from pymongo import MongoClient
 
 # Add current directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -29,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 def run_migrations():
-    """Run all pending migrations using pymongo-migrate"""
     logger.info("=" * 60)
     logger.info("Running MongoDB Migrations (pymongo-migrate)")
     logger.info("=" * 60)
@@ -38,18 +34,15 @@ def run_migrations():
         import importlib.util
         from pathlib import Path
         
-        # Get synchronous MongoDB connection
         mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
         db_name = os.getenv("DB_NAME", "assignment")
         
         client = MongoClient(mongo_uri)
         db_connection = client[db_name]
         
-        # Load and run migrations from migrations folder
         migrations_dir = Path("migrations")
         migration_files = sorted(migrations_dir.glob("*.py"))
         
-        # Track applied migrations
         migrations_collection = db_connection.alembic_version
         
         for migration_file in migration_files:
@@ -58,21 +51,17 @@ def run_migrations():
             
             migration_name = migration_file.stem
             
-            # Check if already applied
             if migrations_collection.find_one({"version": migration_name}):
                 logger.info(f"⊘ Already applied: {migration_name}")
                 continue
             
-            # Load migration module
             spec = importlib.util.spec_from_file_location(migration_name, migration_file)
             migration_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(migration_module)
             
-            # Run upgrade
             logger.info(f"↻ Running: {migration_name}")
             migration_module.upgrade(db_connection)
             
-            # Record migration
             migrations_collection.insert_one({
                 "version": migration_name,
                 "applied_at": datetime.datetime.utcnow()
@@ -92,17 +81,13 @@ def run_migrations():
 
 
 def migration_status():
-    """Show migration status"""
     logger.info("=" * 60)
     logger.info("Migration Status")
     logger.info("=" * 60)
     try:
-        from pymongo import MongoClient
-        
         client = MongoClient(os.getenv("MONGO_URI", "mongodb://localhost:27017"))
         db_connection = client[os.getenv("DB_NAME", "store_visualization_db")]
         
-        # Check migrations collection
         migrations = list(db_connection.alembic_version.find({}))
         
         if not migrations:
@@ -122,7 +107,6 @@ def migration_status():
 
 
 async def seed_database():
-    """Seed sample data"""
     logger.info("=" * 60)
     logger.info("Seeding sample data...")
     logger.info("=" * 60)
@@ -139,7 +123,6 @@ async def seed_database():
 
 
 async def reset_database():
-    """Reset database - drop all collections and migrate"""
     logger.info("=" * 60)
     logger.warning("RESETTING DATABASE - All data will be deleted!")
     logger.info("=" * 60)
@@ -150,13 +133,11 @@ async def reset_database():
         return
     
     try:
-        # Drop all collections
         collections = await db.list_collection_names()
         for collection_name in collections:
             await db[collection_name].drop()
         logger.info("✓ All collections dropped")
         
-        # Run migrations
         run_migrations()
         
         logger.info("=" * 60)
@@ -170,18 +151,15 @@ async def reset_database():
 
 
 def check_status():
-    """Check database status and collections"""
     logger.info("=" * 60)
     logger.info("Database Status")
     logger.info("=" * 60)
     try:
-        from pymongo import MongoClient
         
-        # Use synchronous connection for status check
         client = MongoClient(os.getenv("MONGO_URI", "mongodb://localhost:27017"))
         db_connection = client[os.getenv("DB_NAME", "assignment")]
         
-        # Get collections
+     
         collections = db_connection.list_collection_names()
         logger.info(f"Collections ({len(collections)}):")
         for collection_name in collections:
@@ -189,7 +167,7 @@ def check_status():
             count = collection.count_documents({})
             logger.info(f"  - {collection_name}: {count} documents")
         
-        # Get stores info
+
         if "stores" in collections:
             stores_count = db_connection.stores.count_documents({})
             logger.info(f"\nStores collection:")
@@ -223,7 +201,6 @@ def check_status():
 
 
 def main():
-    """Main entry point"""
     if len(sys.argv) < 2:
         logger.info("Usage: python manage.py <command>")
         logger.info("Commands:")

@@ -1,4 +1,3 @@
-"""GraphQL schema for Store Visualization API"""
 import strawberry
 from typing import Optional
 import db.mongo as mongo_module
