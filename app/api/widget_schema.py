@@ -3,11 +3,10 @@ from typing import Optional, List
 from datetime import datetime
 import db.mongo as mongo_module
 from services.widget_service import widget_service
-
+import traceback
 
 @strawberry.type
 class WidgetConfigType:
-    """Widget configuration GraphQL type"""
     id: str
     store_id: str = strawberry.field(name="storeId")
     domain: str
@@ -20,7 +19,6 @@ class WidgetConfigType:
 
 @strawberry.type
 class AnalyticsEventType:
-    """Analytics event GraphQL type"""
     id: str
     store_id: str
     domain: str
@@ -32,7 +30,6 @@ class AnalyticsEventType:
 
 @strawberry.type
 class AnalyticsSummaryType:
-    """Analytics summary statistics"""
     page_view: int = strawberry.field(name="pageView")
     video_loaded: int = strawberry.field(name="videoLoaded")
     link_clicked: int = strawberry.field(name="linkClicked")
@@ -42,7 +39,6 @@ class AnalyticsSummaryType:
 class WidgetQuery:
     @strawberry.field
     async def get_widget_by_id(self, widget_id: str) -> Optional[WidgetConfigType]:
-        """Get widget configuration by ID (PUBLIC - no auth required)"""
         db = mongo_module.db
         widget_service.set_db(db)
         
@@ -64,7 +60,6 @@ class WidgetQuery:
     
     @strawberry.field
     async def get_widget_by_domain(self, domain: str) -> Optional[WidgetConfigType]:
-        """Get widget configuration by domain (PUBLIC - no auth required)"""
         db = mongo_module.db
         widget_service.set_db(db)
         
@@ -90,12 +85,31 @@ class WidgetQuery:
         store_id: str,
         info=None
     ) -> List[WidgetConfigType]:
-        """Get all widgets for a store (requires auth)"""
-        # TODO: Add auth check
         db = mongo_module.db
         widget_service.set_db(db)
         
         widgets = await widget_service.get_widgets_by_store(store_id)
+        
+        return [
+            WidgetConfigType(
+                id=str(w["_id"]),
+                store_id=str(w["store_id"]),
+                domain=w["domain"],
+                video_url=w["video_url"],
+                banner_text=w.get("banner_text", ""),
+                is_active=w["is_active"],
+                created_at=w["created_at"],
+                updated_at=w["updated_at"],
+            )
+            for w in widgets
+        ]
+    
+    @strawberry.field
+    async def get_all_widgets(self, info=None) -> List[WidgetConfigType]:
+        db = mongo_module.db
+        widget_service.set_db(db)
+        
+        widgets = await widget_service.get_all_widgets()
         
         return [
             WidgetConfigType(
@@ -117,12 +131,48 @@ class WidgetQuery:
         store_id: str = strawberry.argument(name="storeId"),
         info=None
     ) -> AnalyticsSummaryType:
-        """Get analytics summary for a store (requires auth)"""
-        # TODO: Add auth check
         db = mongo_module.db
         widget_service.set_db(db)
         
         summary = await widget_service.get_analytics_summary(store_id)
+        
+        return AnalyticsSummaryType(
+            page_view=summary.get("page_view", 0),
+            video_loaded=summary.get("video_loaded", 0),
+            link_clicked=summary.get("link_clicked", 0),
+        )
+    
+    @strawberry.field
+    async def get_analytics_by_domain(
+        self,
+        domain: str,
+        info=None
+    ) -> AnalyticsSummaryType:
+        
+        db = mongo_module.db
+        
+        data = [
+            {"$match": {"domain": domain}},
+            {"$group": {
+                "_id": "$event_type",
+                "count": {"$sum": 1}
+            }}
+        ]
+        
+        results = await db.widget_analytics.aggregate(data).to_list(None)
+        
+        
+        summary = {
+            "page_view": 0,
+            "video_loaded": 0,
+            "link_clicked": 0
+        }
+        
+        for result in results:
+            event_type = result["_id"]
+            if event_type in summary:
+                summary[event_type] = result["count"]
+
         
         return AnalyticsSummaryType(
             page_view=summary.get("page_view", 0),
@@ -142,8 +192,6 @@ class WidgetMutation:
         banner_text: str = "",
         info=None
     ) -> WidgetConfigType:
-        """Create widget configuration (requires auth)"""
-        # TODO: Add auth check
         db = mongo_module.db
         widget_service.set_db(db)
         
@@ -174,10 +222,9 @@ class WidgetMutation:
         video_url: Optional[str] = None,
         banner_text: Optional[str] = None,
         is_active: Optional[bool] = None,
+        store_id: Optional[str] = None,
         info=None
     ) -> Optional[WidgetConfigType]:
-        """Update widget configuration (requires auth)"""
-        # TODO: Add auth check
         db = mongo_module.db
         widget_service.set_db(db)
         
@@ -185,7 +232,8 @@ class WidgetMutation:
             widget_id=widget_id,
             video_url=video_url,
             banner_text=banner_text,
-            is_active=is_active
+            is_active=is_active,
+            store_id=store_id
         )
         
         if not success:
@@ -210,8 +258,6 @@ class WidgetMutation:
         widget_id: str,
         info=None
     ) -> bool:
-        """Delete widget configuration (requires auth)"""
-        # TODO: Add auth check
         db = mongo_module.db
         widget_service.set_db(db)
         
@@ -227,19 +273,19 @@ class WidgetMutation:
         ip_address: str = "",
         info=None
     ) -> bool:
-        """Track analytics event (PUBLIC - no auth required)"""
         db = mongo_module.db
         widget_service.set_db(db)
         
+        
         try:
-            await widget_service.track_event(
+            result = await widget_service.track_event(
                 store_id=store_id,
                 domain=domain,
                 event_type=event_type,
                 user_agent=user_agent,
                 ip_address=ip_address
             )
-            return True
+            return result
         except Exception as e:
-            print(f"Error tracking event: {e}")
+            traceback.print_exc()
             return False

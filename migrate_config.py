@@ -1,6 +1,3 @@
-"""
-PyMongo Migrate Configuration
-"""
 import os
 from dotenv import load_dotenv
 
@@ -18,7 +15,6 @@ MIGRATIONS_COLLECTION = "alembic_version"
 
 
 def get_database():
-    """Get MongoDB database connection"""
     from pymongo import MongoClient
     
     client = MongoClient(MONGO_URI)

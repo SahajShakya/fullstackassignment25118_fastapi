@@ -1,4 +1,3 @@
-"""Authentication service with JWT and bcrypt"""
 from datetime import datetime, timedelta
 from typing import Tuple, Optional, Dict, Any
 

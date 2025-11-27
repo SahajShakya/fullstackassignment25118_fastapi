@@ -33,6 +33,13 @@ class WidgetService:
         }).to_list(length=None)
         return widgets
     
+    async def get_all_widgets(self) -> List[dict]:
+        """Get all active widgets from all stores"""
+        widgets = await self.db.widget_configs.find({
+            "is_active": True
+        }).to_list(length=None)
+        return widgets
+    
     async def create_widget(
         self,
         store_id: str,
@@ -56,7 +63,8 @@ class WidgetService:
         widget_id: str,
         video_url: Optional[str] = None,
         banner_text: Optional[str] = None,
-        is_active: Optional[bool] = None
+        is_active: Optional[bool] = None,
+        store_id: Optional[str] = None
     ) -> bool:
         update_data = {"updated_at": datetime.utcnow()}
         
@@ -66,6 +74,8 @@ class WidgetService:
             update_data["banner_text"] = banner_text
         if is_active is not None:
             update_data["is_active"] = is_active
+        if store_id is not None:
+            update_data["store_id"] = store_id
         
         result = await self.db.widget_configs.update_one(
             {"_id": ObjectId(widget_id)},
@@ -89,6 +99,7 @@ class WidgetService:
         user_agent: str = "",
         ip_address: str = ""
     ) -> str:
+        
         event = AnalyticsEvent(
             store_id=store_id,
             domain=domain,
@@ -138,6 +149,7 @@ class WidgetService:
         self,
         store_id: str
     ) -> dict:
+        
         pipeline = [
             {"$match": {"store_id": store_id}},
             {"$group": {
@@ -155,8 +167,9 @@ class WidgetService:
         }
         
         for result in results:
-            summary[result["_id"]] = result["count"]
-        
+            event_type = result["_id"]
+            count = result["count"]
+            summary[event_type] = count
         return summary
 
 

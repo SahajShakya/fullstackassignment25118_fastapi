@@ -41,7 +41,6 @@ class WidgetConfig:
     
     @staticmethod
     def from_dict(data: dict) -> "WidgetConfig":
-        """Create instance from MongoDB document"""
         return WidgetConfig(
             store_id=str(data.get("store_id")),
             domain=data.get("domain"),
