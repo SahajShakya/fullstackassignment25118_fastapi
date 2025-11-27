@@ -1,18 +1,14 @@
 (function() {
   'use strict';
 
-  console.log('[Widget] Script loaded');
 
   const BACKEND_URL = 'http://localhost:8000';
   const WIDGET_ID = 'store-widget-banner';
 
-  // Get domain from script data attribute or fallback to current hostname
   const currentScript = document.currentScript;
   const domain = currentScript?.getAttribute('data-domain') || window.location.hostname;
   
-  console.log('[Widget] Initializing with domain:', domain);
 
-  // Fetch widget config by domain
   async function fetchWidgetConfig() {
     try {
       console.log('[Widget] Fetching config for domain:', domain);
@@ -52,7 +48,6 @@
     }
   }
 
-  // Track analytics event
   async function trackEvent(storeId, domain, eventType) {
     try {
       console.log('[Widget] Tracking event:', { storeId, domain, eventType });
@@ -84,7 +79,6 @@
     }
   }
 
-  // Inject CSS styles
   function injectStyles() {
     const style = document.createElement('style');
     style.textContent = `
@@ -149,7 +143,6 @@
         background: rgba(0, 0, 0, 0.8);
       }
 
-      /* iframe Overlay */
       .widget-overlay {
         position: fixed;
         top: 0;
@@ -212,7 +205,6 @@
     document.head.appendChild(style);
   }
 
-  // Create and render banner
   function renderBanner(config) {
     const container = document.createElement('div');
     container.id = WIDGET_ID;
@@ -233,26 +225,21 @@
     const closeBtn = container.querySelector('.widget-close');
     const video = container.querySelector('video');
 
-    // Track video loaded
     video.addEventListener('loadeddata', () => {
       trackEvent(config.storeId, config.domain, 'video_loaded');
     });
 
-    // Banner click - open iframe with video
     banner.addEventListener('click', (e) => {
       if (e.target === closeBtn) return;
       trackEvent(config.storeId, config.domain, 'link_clicked');
-      showIFrame(config.videoUrl);  // Open video URL in iframe
+      showIFrame(config.videoUrl);  
     });
 
-    // Close button
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       container.remove();
     });
   }
-
-  // Show iframe overlay
   function showIFrame(url) {
     const overlay = document.createElement('div');
     overlay.className = 'widget-overlay';
@@ -278,10 +265,8 @@
     });
   }
 
-  // Initialize widget
   async function init() {
     try {
-      console.log('[Widget] Initializing...');
       injectStyles();
 
       const config = await fetchWidgetConfig();
@@ -296,9 +281,6 @@
         return;
       }
 
-      console.log('[Widget] Config is valid, rendering banner');
-
-      // Track page view with store_id
       trackEvent(config.storeId, config.domain, 'page_view');
 
       renderBanner(config);
@@ -307,7 +289,6 @@
     }
   }
 
-  // Wait for DOM to be ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
