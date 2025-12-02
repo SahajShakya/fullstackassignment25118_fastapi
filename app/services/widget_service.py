@@ -1,8 +1,8 @@
 from datetime import datetime
 from bson.objectid import ObjectId
 from typing import Optional, List
-from models.widget import WidgetConfig
-from models.analytics import AnalyticsEvent
+from app.models.widget import WidgetConfig
+from app.models.analytics import AnalyticsEvent
 
 
 class WidgetService:

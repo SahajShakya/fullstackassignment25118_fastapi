@@ -60,6 +60,9 @@ python migrate_config.py history
 # Then run migrations
 python manage.py migrate
 
+##seed data
+python app/seeder/seed_stores.py
+
 ### Start the Backend Server
 source venv/bin/activate
 cd app

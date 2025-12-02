@@ -1,8 +1,8 @@
 import strawberry
-from api.user_schema import Query as UserQuery, Mutation as UserMutation
-from api.store_schema import Query as StoreQuery, Mutation as StoreMutation
-from api.widget_schema import WidgetQuery, WidgetMutation
-from api.store_subscriptions import Subscription as StoreSubscription
+from app.api.user_schema import Query as UserQuery, Mutation as UserMutation
+from app.api.store_schema import Query as StoreQuery, Mutation as StoreMutation
+from app.api.widget_schema import WidgetQuery, WidgetMutation
+from app.api.store_subscriptions import Subscription as StoreSubscription
 
 @strawberry.type
 class Query(UserQuery, StoreQuery, WidgetQuery):

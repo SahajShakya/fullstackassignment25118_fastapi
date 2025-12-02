@@ -1,9 +1,9 @@
 # api/decorators/authmanager.py
-from services.auth_validate import validate_or_refresh_access_token
+from app.services.auth_validate import validate_or_refresh_access_token
 from fastapi import HTTPException
 from functools import wraps
 import inspect
-import db.mongo as mongo_module
+import app.db.mongo as mongo_module
 
 def authmanager(resolver):
     @wraps(resolver)

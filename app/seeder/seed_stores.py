@@ -1,9 +1,14 @@
 from pymongo import MongoClient
 from datetime import datetime
+import sys
 import os
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.environ.get("MONGO_DB_NAME", "assignment")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from app.core.config import settings
+
+MONGO_URI = settings.MONGO_URI
+DB_NAME = settings.DB_NAME
 
 stores_data = [
     {

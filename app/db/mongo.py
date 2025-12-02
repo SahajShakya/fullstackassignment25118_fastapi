@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # MongoDB connection settings
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "store_visualization_db")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:sahaj1@mongo:27017")
+DB_NAME = os.getenv("DB_NAME", "assignment")
 
 # Global Mongo client and database
 client = None

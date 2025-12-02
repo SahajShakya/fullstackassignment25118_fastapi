@@ -1,10 +1,10 @@
 import strawberry
 import asyncio
 from typing import AsyncGenerator
-import db.mongo as mongo_module
-from services.store import store_service
-from api.store_schema import Store, Model
-from core.config import settings
+import app.db.mongo as mongo_module
+from app.services.store import store_service
+from app.api.store_schema import Store, Model
+from app.core.config import settings
 
 BackEND_URL = settings.BACKEND_URL
 

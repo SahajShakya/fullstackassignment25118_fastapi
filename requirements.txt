@@ -23,7 +23,7 @@ pymongo==4.15.4
 pymongo-migrate==1.0.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
-python-jose==3.3.0
+python-jose[cryptography]==3.5.0
 python-multipart==0.0.20
 pytokens==0.3.0
 six==1.17.0
@@ -33,4 +33,5 @@ strawberry-graphql==0.287.0
 tomli==2.3.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
-uvicorn==0.38.0
+uvicorn[standard]==0.38.0
+websockets==14.1

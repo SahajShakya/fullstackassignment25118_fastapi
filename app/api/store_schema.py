@@ -2,9 +2,9 @@
 import strawberry
 from typing import List, Optional
 # from middleware.auth_middleware import authmanager
-import db.mongo as mongo_module
-from services.store import store_service
-from core.config import settings
+import app.db.mongo as mongo_module
+from app.services.store import store_service
+from app.core.config import settings
 
 BackEND_URL = settings.BACKEND_URL
 

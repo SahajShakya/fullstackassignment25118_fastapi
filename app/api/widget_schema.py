@@ -1,8 +1,8 @@
 import strawberry
 from typing import Optional, List
 from datetime import datetime
-import db.mongo as mongo_module
-from services.widget_service import widget_service
+import app.db.mongo as mongo_module
+from app.services.widget_service import widget_service
 import traceback
 
 @strawberry.type

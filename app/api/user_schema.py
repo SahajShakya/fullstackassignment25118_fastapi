@@ -1,7 +1,7 @@
 import strawberry
 from typing import Optional
-import db.mongo as mongo_module
-from services.auth import auth_service
+import app.db.mongo as mongo_module
+from app.services.auth import auth_service
 
 
 @strawberry.type

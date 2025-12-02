@@ -2,7 +2,7 @@
 from fastapi import HTTPException
 from datetime import datetime, timedelta
 from typing import Optional
-from services.auth import auth_service
+from app.services.auth import auth_service
 from bson.objectid import ObjectId
 import jwt
 

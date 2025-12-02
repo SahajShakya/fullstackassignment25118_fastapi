@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  backend:
+    image: sazshakya/backendassignment:latest
+    container_name: assignment-backend
+    ports:
+      - "9090:8000"
+    environment:
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:sahaj1@mongo:27017}
+      DB_NAME: ${DB_NAME:-assignment}
+      SECRET_KEY: ${SECRET_KEY:-key}
+      DEBUG: ${DEBUG:-False}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:9090}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - app-network
+    command: sh -c "python manage.py migrate && python app/seeder/seed_stores.py && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  mongo:
+    image: mongo:6.0
+    container_name: assignment-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=sahaj1
+      - MONGO_INITDB_DATABASE=assignment
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh -u mongo -p sahaj1 --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: mongod --auth
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

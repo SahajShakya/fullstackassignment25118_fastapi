@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from typing import Union
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from strawberry.fastapi import GraphQLRouter
-from db.mongo import connect_to_mongo, close_mongo_connection, db
-from api.schema import combined_schema
+from app.db.mongo import connect_to_mongo, close_mongo_connection, db
+from app.api.schema import combined_schema
 import os 
 
 # Lifespan context manager for startup/shutdown
@@ -27,10 +28,25 @@ app = FastAPI(
 # CORS middleware - specific origins for credentials
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:4040",
+        "http://localhost:5173",
+        "http://localhost:9090",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:4040",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:9090",
+        "http://139.59.120.168:3000",
+        "http://139.59.120.168:4040",
+        "http://139.59.120.168:9090",
+        "http://139.59.120.168:5173",
+         "http://139.59.120.168:8000",
+        
+    ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*", "Authorization"]
+    allow_headers=["*", "Authorization"],
 )
 
 app.include_router(GraphQLRouter(combined_schema), prefix="/graphql")
@@ -54,7 +70,7 @@ async def root():
     }
 
 
-@app.get("/widget/index.js")
+@app.get("/widget/index.js", response_model=None)
 async def get_widget():
     """Serve widget JS file for embedding on external domains"""
     widget_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "widget", "index.js")

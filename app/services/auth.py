@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from bson.objectid import ObjectId
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-from core.config import settings
+from app.core.config import settings
 
 
 # Password hashing

@@ -1,0 +1,144 @@
+# version: '3.8'
+
+# services:
+#   mongo:
+#     image: mongo:6.0
+#     container_name: assignment-mongo
+#     restart: always
+#     ports:
+#       - "27017:27017"
+#     environment:
+#       MONGO_INITDB_ROOT_USERNAME: mongo
+#       MONGO_INITDB_ROOT_PASSWORD: sahaj1
+#       MONGO_INITDB_DATABASE: assignment
+#     volumes:
+#       - mongo-data:/data/db
+#     networks:
+#       - app-network
+#     healthcheck:
+#       test: ["CMD", "mongosh", "--username", "mongo", "--password", "sahaj1", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 10
+#     command: mongod --auth
+
+#   backend:
+#     image: sazshakya/backendassignment:latest
+#     container_name: assignment-backend
+#     restart: always
+#     ports:
+#       - "9090:8000"
+#     environment:
+#       MONGO_URI: mongodb://mongo:sahaj1@mongo:27017/assignment?authSource=admin
+#       DB_NAME: assignment
+#       SECRET_KEY: key
+#       DEBUG: False
+#       BACKEND_URL: http://localhost:9090
+#     depends_on:
+#       mongo:
+#         condition: service_healthy
+#     networks:
+#       - app-network
+#     command: >
+#       sh -c "
+#         python manage.py migrate &&
+#         python app/seeder/seed_stores.py &&
+#         python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+#       "
+
+#   frontend:
+#     image: sazshakya/frontendassignment:latest
+#     container_name: assignment-frontend
+#     restart: always
+#     ports:
+#       - "4040:3000"
+#     environment:
+#       VITE_GRAPHQL_URL: http://localhost:9090/graphql
+#       VITE_WS_GRAPHQL_URL: ws://localhost:9090/graphql
+#       VITE_WS_URL: ws://localhost:9090/api/ws
+#       VITE_API_URL: http://localhost:9090
+#     depends_on:
+#       - backend
+#     networks:
+#       - app-network
+
+# volumes:
+#   mongo-data:
+#     driver: local
+
+# networks:
+#   app-network:
+#     driver: bridge
+
+
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: assignment-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: sahaj1
+      MONGO_INITDB_DATABASE: assignment
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--username", "mongo", "--password", "sahaj1", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: mongod --auth
+
+  backend:
+    image: sazshakya/backendassignment:latest
+    container_name: assignment-backend
+    restart: always
+    ports:
+      - "9090:8000"
+    environment:
+      MONGO_URI: mongodb://mongo:sahaj1@mongo:27017/assignment?authSource=admin
+      DB_NAME: assignment
+      SECRET_KEY: key
+      DEBUG: False
+      BACKEND_URL: http://139.59.120.168:9090
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - app-network
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python app/seeder/seed_stores.py &&
+        python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
+
+  frontend:
+    image: sazshakya/frontendassignment:latest
+    container_name: assignment-frontend
+    restart: always
+    ports:
+      - "4040:3000"
+    environment:
+      VITE_GRAPHQL_URL: http://139.59.120.168:9090/graphql
+      VITE_WS_GRAPHQL_URL: ws://139.59.120.168:9090/graphql
+      VITE_WS_URL: ws://139.59.120.168:9090/api/ws
+      VITE_API_URL: http://139.59.120.168:9090
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
